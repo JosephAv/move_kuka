@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc,argv,"main_node");
     ros::NodeHandle nh_main;
- 
+
     std::cout << "\r\n\n\n\033[32m\033[1mSTART \033[0m" << std::endl; 
 
     move_kuka MK;

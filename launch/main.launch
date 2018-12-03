@@ -1,12 +1,13 @@
 <launch>
 	
 	<param name="trajectory_type" value="2"/> <!--4 sideside 5 updown 8 frontal--> 
-	<param name="traj_time" value="8"/> <!--0.05--> 
+	<param name="traj_time" value="1"/> <!--0.05--> 
 	<param name="spin_rate" value="300"/><!--300-->
 	<param name="box_size" value="0.3"/> <!-- 0.2 0.14-->
 	<param name="A_" value="0.1"/> <!--0.10-->
 
-    <param name="a1_home" value="0.86"/> 
+	<!--Home joint values-->    
+	<param name="a1_home" value="0.56"/> 
     <param name="a2_home" value="-1.33"/> 
     <param name="e1_home" value="-0.19"/> 
     <param name="a3_home" value="-1.36"/> 
@@ -14,6 +15,7 @@
     <param name="a5_home" value="-1.09"/>
     <param name="a6_home" value="0.12"/>
 
+    <!--Rest Pose-->
 	<param name="rest_x_" value="1.54"/> <!-- -->
 	<param name="rest_y_" value="0.45"/> <!-- -->
 	<param name="rest_z_" value="1.3"/> <!-- -->
@@ -22,27 +24,14 @@
 	<param name="rest_q_y_" value="-0.11"/> <!--  -->
 	<param name="rest_q_z_" value="0.76"/> <!--  -->
 
+    <!--Home Pose-->
 	<param name="offset_x_" value="1.675 "/> <!-- 1.675--> 
-	<!--1.571 for lateral GA CDS --><!--1.676 for straight pinch GA CDS --><!--1.737 for left pinch GA CDS --><!--1.676 for right pinch GA CDS -->
-	<!--1.575 for bowl grasp GA CDS -->
 	<param name="offset_y_" value="0.730"/> <!-- 0.730--> 
-	<!--0.501 for lateral GA CDS --><!--0.81 for straight pinch GA CDS --><!--0.777 for left pinch GA CDS --><!--0.81 for right pinch GA CDS -->
-	<!--0.430 for bowl grasp GA CDS -->
 	<param name="offset_z_" value="1.30"/> <!-- updown (5) offset z  1.30 cube, ball, bottle side 1.42 bottle up,berry 1.30, thumb 1.28 -->  
-	<!--1.15 for lateral GA CDS --><!--1.425 for straight pinch GA CDS --><!--1.435 for left pinch GA CDS --><!--1.43 for right pinch GA CDS -->
-	<!--1.34 for bowl grasp GA CDS -->
 	<param name="q_w_" value="0.0"/> <!-- 0.0-->
-	<!--0.084 for straight pinch GA CDS --><!--0.116 for left pinch GA CDS --><!--0.186 for right pinch GA CDS -->
-	<!--0.145 for bowl grasp GA CDS -->
 	<param name="q_x_" value="0.711"/> <!-- 0.711-->
-	<!--0.816 for straight pinch GA CDS --><!--0.733 for left pinch GA CDS --><!--0.89 for right pinch GA CDS -->
-	<!-- -0.696 for bowl grasp GA CDS -->
 	<param name="q_y_" value="0.0"/><!-- 0.0-->
-	<!--0.17 for straight pinch GA CDS --><!--0.483 for left pinch GA CDS --><!-- -0.11 for right pinch GA CDS -->
-	<!--0.701 for bowl grasp GA CDS -->
 	<param name="q_z_" value="0.703"/> <!-- 0.703-->
-	<!--0.458 for straight pinch GA CDS --><!--0.463 for left pinch GA CDS --><!--0.40 for right pinch GA CDS -->
-	<!--0.030 for bowl grasp GA CDS -->
 
 
 

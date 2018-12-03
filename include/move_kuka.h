@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <vector>
 #include <cstdlib>
 #include <csignal>
 #include <string>
@@ -75,8 +76,8 @@ private:
     geometry_msgs::Wrench zero_wrench_;
     lwr_controllers::CartesianImpedancePoint msg_;
 
-	void kukaTopGrasp();
-	void kukaLateralGrasp();
+	// void kukaTopGrasp();
+	// void kukaLateralGrasp();
 
 
 
@@ -92,8 +93,8 @@ private:
 	std_msgs::Float64MultiArray joint_home;
 
 
-	void tondoDatabase();
-	void openTondoDatabase(float& x,float& y,float& z,float& angle);
+	// void tondoDatabase();
+	// void openTondoDatabase(float& x,float& y,float& z,float& angle);
 
 	int interpolation(Eigen::Affine3d x_start, Eigen::Affine3d x_finish, double traj_time_local=2.0);
 	void finishPosition(float z);
@@ -104,13 +105,15 @@ private:
 
 
 	// call back
-	void callWichFinger(std_msgs::String msg);
-	void callImuId(std_msgs::Int64 imu_id);
+	// void callWichFinger(std_msgs::String msg);
+	// void callImuId(std_msgs::Int64 imu_id);
 	bool flag_which_finger_;
 	bool flag_grasp_;	
 
-
-
+	// std::fstream input_file;
+	// std::vector<float> mypose;
+	float mypose;
+	float mypose1, mypose2, mypose3, mypose4, mypose5, mypose6, mypose7;
 	// using new database
 	/*
 	void graspDatabase();
