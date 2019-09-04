@@ -45,7 +45,6 @@
 #include <qb_interface/inertialSensorArray.h>
 #include "lwr_controllers/SetCartesianImpedanceCommand.h"
 
-
 class move_kuka
 {
 public:
@@ -83,7 +82,7 @@ private:
 
 	float degree_;
 	rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
-	ros::Publisher pub_command_,pub_command_t, pub_home_;
+	ros::Publisher pub_command_,pub_command_t, pub_home_, pub_command_ci;
 	float A_,offset_x_,offset_y_,offset_z_,delta_degree_, q_w_, q_x_, q_y_, q_z_; 
 	float rest_x_, rest_y_, rest_z_, rest_q_w_, rest_q_x_, rest_q_y_, rest_q_z_;
 	float stiffness_t, stiffness_r, damping, wrench; 
@@ -91,6 +90,7 @@ private:
 	double off_high_;
 	bool bowl_, sliding_;
 	std_msgs::Float64MultiArray joint_home;
+	std_msgs::Float64MultiArray pose_home1;
 
 
 	// void tondoDatabase();

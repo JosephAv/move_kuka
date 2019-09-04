@@ -10,6 +10,7 @@ move_kuka::move_kuka()
 	//check which controller you want to use; now it is teleoperation_controller
 	pub_command_ = n_.advertise<lwr_controllers::CartesianImpedancePoint>("/right_arm/cartesian_impedance_controller/command", 0);
 	pub_command_t = n_.advertise<geometry_msgs::Pose>("/right_arm/teleoperation_controller/command", 0);
+	pub_command_ci = n_.advertise<std_msgs::Float64MultiArray>("/right_arm/cartesian_impedance_vito_controller/command", 0);
 	pub_home_ = n_.advertise<std_msgs::Float64MultiArray>("/right_arm/teleoperation_controller/home", 0);
 
 	hand_publisher_ = n_.advertise<std_msgs::Float64>("/right_hand/hand_position", 0);
@@ -59,6 +60,16 @@ move_kuka::move_kuka()
   	}
     std::cout<<"]"<<std::endl;
     
+	pose_home1.data.resize(6);
+	pose_home1.data[0] = 0.5;
+	pose_home1.data[1] = 0.0;
+	pose_home1.data[2] = 1.0;
+	pose_home1.data[3] = 0.0;
+	pose_home1.data[4] = 0.0;
+	pose_home1.data[5] = 0.0;
+
+    std::cout<<"Pose HOME: " << pose_home1;
+
 	n_.param<float>("/delta_degree_",delta_degree_,0.30);
 
 	n_.param<float>("/stiffness_t",stiffness_t,2000);
@@ -174,6 +185,20 @@ void move_kuka::homePosition()
 	interpolation(pose_init, pose_rest, traj_time);
 
 	pub_home_.publish(joint_home);
+
+/*    for(int i=0; i<100; i++){
+		pub_command_ci.publish(pose_home1);
+    }*/
+
+    //while(true){
+	pub_command_ci.publish(pose_home1);
+    //}
+
+/*    for(int i=0; i<6; i++){
+    	pose_home1.data[i] =1.0;
+    }*/
+
+	//pub_command_ci.publish(pose_home1);
 
 	std::cout << "\r\n\n\n\033[32m\033[1mRest Position \033[0m" << std::endl;
 	std::cout << "\r\n\n\n\033[32m\033[1mPress to continue.. \033[0m" << std::endl;
