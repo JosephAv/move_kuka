@@ -13,6 +13,7 @@
 #include <string>
 #include <boost/algorithm/string.hpp>
 #include <eigen_conversions/eigen_msg.h>
+#include <eigen_conversions/eigen_kdl.h>
 #include <boost/algorithm/string.hpp>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -45,6 +46,8 @@
 #include <qb_interface/inertialSensorArray.h>
 #include "lwr_controllers/SetCartesianImpedanceCommand.h"
 
+#include <tf/LinearMath/Matrix3x3.h>
+
 class move_kuka
 {
 public:
@@ -57,8 +60,12 @@ public:
 	void homePosition();
 
 private:
-
-	ros::NodeHandle n_;
+  const double mm2m = 0.001;
+  
+  const double averta = 120/57;
+  
+  bool manager_done = false;
+// 	ros::NodeHandle n_;
 	ros::Subscriber sub_which_finger_;
 	ros::Subscriber sub_imu_id_;
     std::string pkg_path_;	
@@ -75,10 +82,12 @@ private:
     geometry_msgs::Wrench zero_wrench_;
     lwr_controllers::CartesianImpedancePoint msg_;
 
+    Eigen::Affine3d offset;
 	// void kukaTopGrasp();
 	// void kukaLateralGrasp();
 
 
+    Eigen::Affine3d ee_offset;
 
 	float degree_;
 	rviz_visual_tools::RvizVisualToolsPtr visual_tools_;
@@ -92,6 +101,10 @@ private:
 	std_msgs::Float64MultiArray joint_home;
 	std_msgs::Float64MultiArray pose_home1;
 
+	Eigen::Affine3d pose_home_affine;
+	
+	double num[15];
+	char delim;
 
 	// void tondoDatabase();
 	// void openTondoDatabase(float& x,float& y,float& z,float& angle);
@@ -131,4 +144,6 @@ private:
 	Eigen::Vector4f QxQ(Eigen::Vector4f Q_1, Eigen::Vector4f Q_2);
 	Eigen::Vector4f ConjQ(Eigen::Vector4f Q_in);
 	*/
+	
+  std::string csv_filename;
 };

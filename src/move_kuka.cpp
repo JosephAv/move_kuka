@@ -1,16 +1,21 @@
 #include <move_kuka.h>
 
+// NOTE
+// TRANSFORM FROM VITO_ILIAD.URDF.XACRO FROM WORLD TO RIGHT SHOULDER
+// <origin xyz="0.77 0.801 1.607" rpy="3.1415 -0.7854 0"/>
+
 // this package has been adapted from proto_grasp to replicate simple trajectories on kuka robot. GA 
 move_kuka::move_kuka()
 {
+  	ros::NodeHandle n_("~");
+
 	// sub_which_finger_ = n_.subscribe("/which_finger", 0, &move_kuka::callWichFinger, this);
 	// sub_imu_id_ = n_.subscribe("/imu_id", 0, &move_kuka::callImuId, this);
 	visual_tools_.reset(new rviz_visual_tools::RvizVisualTools("vito_anchor", "/rviz_visual_markers"));
 	visual_tools_->deleteAllMarkers();
 	//check which controller you want to use; now it is teleoperation_controller
-	pub_command_ = n_.advertise<lwr_controllers::CartesianImpedancePoint>("/right_arm/cartesian_impedance_controller/command", 0);
-	pub_command_t = n_.advertise<geometry_msgs::Pose>("/right_arm/teleoperation_controller/command", 0);
-	pub_command_ci = n_.advertise<std_msgs::Float64MultiArray>("/right_arm/cartesian_impedance_vito_controller/command", 0);
+// 	pub_command_t = n_.advertise<geometry_msgs::Pose>("/right_arm/teleoperation_controller/command", 0);
+	pub_command_ci = n_.advertise<std_msgs::Float64MultiArray>("/right_arm/vito_bridge_controller/commandCart_right", 0);
 	pub_home_ = n_.advertise<std_msgs::Float64MultiArray>("/right_arm/teleoperation_controller/home", 0);
 
 	hand_publisher_ = n_.advertise<std_msgs::Float64>("/right_hand/hand_position", 0);
@@ -19,7 +24,7 @@ move_kuka::move_kuka()
 	trajectory_type = 1;
 	n_.param<int>("/trajectory_type", trajectory_type, 0);
 	n_.param<double>("/traj_time", traj_time, 2.0);
-	n_.param<double>("/spin_rate", spin_rate, 300.0);
+	n_.param<double>("/spin_rate", spin_rate, 100.0);
 	n_.param<double>("/box_size", box_size, 0.15);
 
 	n_.param<float>("/A_",A_,0.10);
@@ -61,9 +66,9 @@ move_kuka::move_kuka()
     std::cout<<"]"<<std::endl;
     
 	pose_home1.data.resize(6);
-	pose_home1.data[0] = 0.5;
-	pose_home1.data[1] = 0.0;
-	pose_home1.data[2] = 1.0;
+	pose_home1.data[0] = 0; // 0.5;
+	pose_home1.data[1] = 0; // 0.0;
+	pose_home1.data[2] = 0; // 1.0;
 	pose_home1.data[3] = 0.0;
 	pose_home1.data[4] = 0.0;
 	pose_home1.data[5] = 0.0;
@@ -112,6 +117,133 @@ move_kuka::move_kuka()
 
 
 	// handClosure(0.3);
+	
+  
+  n_.getParam("csv_file", csv_filename);
+  
+  ROS_INFO_STREAM("Trajectory file: " << csv_filename);  
+  
+
+
+
+  if(!csv_filename.empty())
+  {
+
+    std::ifstream csv_file;
+    csv_file.open (csv_filename);
+
+
+    if(csv_file.is_open())
+	    std::cout << "file correctly open" << std::endl;
+    else
+  
+      ROS_ERROR("Could not open input csv file");
+  
+    
+    for (int i=0; i< 16; i++)
+    {
+      csv_file >> num[i];
+      csv_file >> delim;
+      std::cout << num[i] << " ";
+    }
+    std::cout << std::endl;
+//     while (csv_file >> mypose1 >> mypose2 >> mypose3 >> mypose4 >> mypose5 >> mypose6 >> mypose7) {
+// 	    std::cout << "mypose is: " << mypose1 << " " << mypose2 << " " << mypose3 << " " << mypose4 << " " << mypose5 << " " << mypose6 << " " << mypose7 <<  "\n" << std::endl;
+// 	    joint_home.data[0] = mypose1;
+// 	    joint_home.data[1] = mypose2;
+// 	    joint_home.data[2] = mypose3;
+// 	    joint_home.data[3] = mypose4;
+// 	    joint_home.data[4] = mypose5;
+// 	    joint_home.data[5] = mypose6;
+// 	    joint_home.data[6] = mypose7;
+// 	    pub_home_.publish(joint_home);
+    
+   
+    csv_file.close();
+  }
+  
+  
+
+  
+  
+  // set offset translation and rotation
+
+//   KDL::Frame offset_frame(
+//     KDL::Rotation::RPY(
+//       0.0,
+//       0.7854,
+//       0.0
+//     ),
+//     KDL::Vector(-125*mm2m, 
+// 				      -148*mm2m, 
+// 				      115*mm2m)
+// 			 );
+//  
+  
+  KDL::Frame offset_frame(
+    KDL::Rotation::RPY(
+      0.0,
+      0.7854,
+      0.0
+    ),
+    KDL::Vector(-125*mm2m, 
+				      -148*mm2m, 
+				      115*mm2m)
+			 );
+  offset = Eigen::Affine3d::Identity();
+  tf::transformKDLToEigen(offset_frame,offset);
+
+  
+  ROS_INFO_STREAM("Setting offset");
+  std::cout << "\tTranslation: " << std::endl <<  offset.translation() << std::endl;
+  std::cout << "\tRotation: " << std::endl <<  offset.rotation() << std::endl;
+  
+  
+  // end effector offset matrix
+    KDL::Frame rotation_ee_frame1(
+    KDL::Rotation::RPY(
+      0.0,
+      1.57,
+      0
+    ),
+    KDL::Vector(0, 
+		0, 
+		0)
+			 );
+  Eigen::Affine3d ee_offset1 = Eigen::Affine3d::Identity();
+  tf::transformKDLToEigen(rotation_ee_frame1,ee_offset1);
+  
+  KDL::Frame rotation_ee_frame(
+    KDL::Rotation::RPY(
+      0.0,
+      0,
+      1.57
+    ),
+    KDL::Vector(0, 
+		0, 
+		0)
+			 );
+  ee_offset = Eigen::Affine3d::Identity();
+  tf::transformKDLToEigen(rotation_ee_frame,ee_offset);
+  
+  ee_offset = ee_offset1*ee_offset;
+  
+  //
+  
+  Eigen::Matrix4d num_matrix;
+num_matrix << num[0], num[4], num[8], num[12]*mm2m*averta,
+	      num[1], num[5], num[9], num[13]*mm2m*averta, 
+	      num[2], num[6], num[10], num[14]*mm2m*averta, 
+	      num[3], num[7], num[11], num[15];
+		
+
+
+  pose_home_affine.matrix() = num_matrix;
+  
+  ROS_INFO_STREAM("Homing pose in ");
+  std::cout << "\tTranslation: " << std::endl <<  offset.translation() << std::endl;
+  std::cout << "\tRotation: " << std::endl <<  offset.rotation() << std::endl;
+
 }
 
 move_kuka::~move_kuka()
@@ -123,7 +255,7 @@ move_kuka::~move_kuka()
 void move_kuka::homePosition()
 {
 	// get current transofrmation between "vito_anchor" and "right_palm_link"
-	std::string link_from = "/vito_anchor";
+	std::string link_from = "/right_arm_base_link";
 	std::string link_to   = "/right_arm_7_link"; 
 
 	tf::TransformListener listener;
@@ -173,25 +305,28 @@ void move_kuka::homePosition()
     // pose_home = Eigen::AngleAxisd(-M_PI / 2., Eigen::Vector3d::UnitY()); // rotate along "AXIS" axis by 90 degrees
 
 	// define the rest pose and go from any initial position to the rest position
-    q_rest.w() = rest_q_w_;
-    q_rest.x() = rest_q_x_;
-    q_rest.y() = rest_q_y_;
-    q_rest.z() = rest_q_z_;
 
+    tf::Quaternion q_ref;
+    q_ref.setRPY(pose_home1.data[3], pose_home1.data[4], pose_home1.data[5]);
+    q_rest.x() = q_ref.x();
+    q_rest.y() = q_ref.y();
+    q_rest.z() = q_ref.z();
+    q_rest.w() = q_ref.w();
+    
     pose_rest = Eigen::Affine3d(q_rest);
-	pose_rest.translation() = Eigen::Vector3d( rest_x_ , rest_y_ , rest_z_  ); // translate x,y,z
+	pose_rest.translation() = Eigen::Vector3d( pose_home1.data[0] , pose_home1.data[1] , pose_home1.data[2]); // translate x,y,z
 
-
-	interpolation(pose_init, pose_rest, traj_time);
-
-	pub_home_.publish(joint_home);
+    ROS_INFO("Begin homing...");
+	interpolation(pose_init, pose_home_affine, 10.0);// traj_time);
+    ROS_INFO("Home is where the heart is");
+// 	pub_home_.publish(joint_home);
 
 /*    for(int i=0; i<100; i++){
 		pub_command_ci.publish(pose_home1);
     }*/
 
     //while(true){
-	pub_command_ci.publish(pose_home1);
+// 	pub_command_ci.publish(pose_home1);
     //}
 
 /*    for(int i=0; i<6; i++){
@@ -260,35 +395,125 @@ void move_kuka::homePosition()
 //------------------------------------------------------------------------------------------
 void move_kuka::manager()
 {
-	ros::Rate r(spin_rate);
+  if(manager_done)
+  {
+    ROS_INFO("Nothing to do here.");
+    return;
+  }
+    
+    
+	ros::Rate r(25);
 
-	// while (1)
-	// {
-		std::ifstream input_file;
-		input_file.open ("/home/averta/catkin_ws/src/move_kuka/src/my_input_file1.txt");
+// 	// while (1)
+// 	// {
+// 		std::ifstream input_file;
+// 		input_file.open ("/home/averta/catkin_ws/src/move_kuka/src/my_input_file1.txt");
+// 
+// 
+// 		if(input_file.is_open()){
+// 			std::cout << "file correctly open" << std::endl;
+// 		}
+// 
+// 
+// 		while (input_file >> mypose1 >> mypose2 >> mypose3 >> mypose4 >> mypose5 >> mypose6 >> mypose7){
+// 			std::cout << "mypose is: " << mypose1 << " " << mypose2 << " " << mypose3 << " " << mypose4 << " " << mypose5 << " " << mypose6 << " " << mypose7 <<  "\n" << std::endl;
+// 			joint_home.data[0] = mypose1;
+// 			joint_home.data[1] = mypose2;
+// 			joint_home.data[2] = mypose3;
+// 			joint_home.data[3] = mypose4;
+// 			joint_home.data[4] = mypose5;
+// 			joint_home.data[5] = mypose6;
+// 			joint_home.data[6] = mypose7;
+// 			pub_home_.publish(joint_home);
+// 		}
+// 		
+// 		// }
 
 
-		if(input_file.is_open()){
-			std::cout << "file correctly open" << std::endl;
-		}
+  
+
+  if(!csv_filename.empty())
+  {
+
+    std::ifstream csv_file;
+    csv_file.open (csv_filename);
 
 
-		while (input_file >> mypose1 >> mypose2 >> mypose3 >> mypose4 >> mypose5 >> mypose6 >> mypose7){
-			std::cout << "mypose is: " << mypose1 << " " << mypose2 << " " << mypose3 << " " << mypose4 << " " << mypose5 << " " << mypose6 << " " << mypose7 <<  "\n" << std::endl;
-			joint_home.data[0] = mypose1;
-			joint_home.data[1] = mypose2;
-			joint_home.data[2] = mypose3;
-			joint_home.data[3] = mypose4;
-			joint_home.data[4] = mypose5;
-			joint_home.data[5] = mypose6;
-			joint_home.data[6] = mypose7;
-			pub_home_.publish(joint_home);
-		}
+    if(csv_file.is_open())
+	    std::cout << "file correctly open" << std::endl;
+    else
+  
+      ROS_ERROR("Could not open input csv file");
+  
+    unsigned int line = 0;
+    while(!csv_file.eof())
+    {
+      std::cout << line++ << ": ";
+      for (int i=0; i< 16; i++)
+      {
+	csv_file >> num[i];
+	csv_file >> delim;
+	std::cout << num[i] << " ";
+      }
+      std::cout << std::endl;
+      
+      // pub msg
+      Eigen::Matrix4d num_matrix;
+num_matrix << num[0], num[4], num[8], num[12]*mm2m*averta,
+	      num[1], num[5], num[9], num[13]*mm2m*averta, 
+	      num[2], num[6], num[10], num[14]*mm2m*averta, 
+	      num[3], num[7], num[11], num[15];
 		
-		// }
 
 
-
+	      Eigen::Affine3d pose_todo;
+  pose_todo.matrix() = num_matrix;
+//   pose_todo = offset*pose_todo;
+  pose_todo = offset*pose_todo*ee_offset;
+  
+  // 
+  tf::poseEigenToMsg(pose_todo, msg_.x_FRI);
+		geometry_msgs::Pose pose;
+		pose = msg_.x_FRI;
+// 		pub_command_.publish(msg_);
+// 		pub_command_t.publish(pose);
+		
+		// publish to vito_bridge_controller
+		std_msgs::Float64MultiArray pose_cartesian_interp_;
+		pose_cartesian_interp_.data.resize(6);
+		pose_cartesian_interp_.data[0] = pose.position.x;
+		pose_cartesian_interp_.data[1] = pose.position.y;
+		pose_cartesian_interp_.data[2] = pose.position.z;
+	
+		
+	double roll,pitch,yaw;	
+	tf::Quaternion q(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
+	tf::Matrix3x3 mtx(q);
+	mtx.getRPY(roll,pitch,yaw);
+	pose_cartesian_interp_.data[3] = roll;
+	pose_cartesian_interp_.data[4] = pitch;
+	pose_cartesian_interp_.data[5] = yaw;
+	
+		pub_command_ci.publish(pose_cartesian_interp_);
+		
+// 		ros::spinOnce();
+      // 
+      r.sleep();
+    }
+//     while (csv_file >> mypose1 >> mypose2 >> mypose3 >> mypose4 >> mypose5 >> mypose6 >> mypose7) {
+// 	    std::cout << "mypose is: " << mypose1 << " " << mypose2 << " " << mypose3 << " " << mypose4 << " " << mypose5 << " " << mypose6 << " " << mypose7 <<  "\n" << std::endl;
+// 	    joint_home.data[0] = mypose1;
+// 	    joint_home.data[1] = mypose2;
+// 	    joint_home.data[2] = mypose3;
+// 	    joint_home.data[3] = mypose4;
+// 	    joint_home.data[4] = mypose5;
+// 	    joint_home.data[5] = mypose6;
+// 	    joint_home.data[6] = mypose7;
+// 	    pub_home_.publish(joint_home);
+    
+   
+    csv_file.close();
+  }
 
 
 	// for(int i=0; i<10; i++)
@@ -309,8 +534,9 @@ void move_kuka::manager()
 
 	// }
 
+  manager_done = true;
+  ROS_INFO("Manager done.");
 
-		ros::shutdown();
 
 }
 
@@ -334,6 +560,9 @@ int move_kuka::interpolation(Eigen::Affine3d x_start, Eigen::Affine3d x_finish, 
 
 	// read quaternion from GeometryPoseMsg and convert them to Eigen::Quaterniond
 	//passing from affine3d to geometry_msg
+	
+	x_finish = offset*x_finish*ee_offset;
+	
 	tf::poseEigenToMsg(x_now, x_now_frame);
 	tf::poseEigenToMsg(x_finish, x_finish_frame);
 
@@ -342,8 +571,10 @@ int move_kuka::interpolation(Eigen::Affine3d x_start, Eigen::Affine3d x_finish, 
 	Eigen::Quaterniond q_err;
 
 	ros::Rate r(spin_rate);
+	
 	while (c <= 1 && ros::ok())
 	{
+	  std::cout << c << std::endl;
 		// update orientation
 		double ctanh(std::tanh(4*c));
 		if (c <= 1)
@@ -363,8 +594,27 @@ int move_kuka::interpolation(Eigen::Affine3d x_start, Eigen::Affine3d x_finish, 
 		tf::poseEigenToMsg(x_next, msg_.x_FRI);
 		geometry_msgs::Pose pose;
 		pose = msg_.x_FRI;
-		pub_command_.publish(msg_);
-		pub_command_t.publish(pose);
+// 		pub_command_.publish(msg_);
+// 		pub_command_t.publish(pose);
+		
+		// publish to vito_bridge_controller
+		std_msgs::Float64MultiArray pose_cartesian_interp_;
+		pose_cartesian_interp_.data.resize(6);
+		pose_cartesian_interp_.data[0] = pose.position.x;
+		pose_cartesian_interp_.data[1] = pose.position.y;
+		pose_cartesian_interp_.data[2] = pose.position.z;
+	
+		
+	double roll,pitch,yaw;	
+	tf::Quaternion q(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
+	tf::Matrix3x3 mtx(q);
+	mtx.getRPY(roll,pitch,yaw);
+	pose_cartesian_interp_.data[3] = roll;
+	pose_cartesian_interp_.data[4] = pitch;
+	pose_cartesian_interp_.data[5] = yaw;
+	
+		pub_command_ci.publish(pose_cartesian_interp_);
+		
 		ros::spinOnce();
 
 		c += (1.0 / spin_rate) / traj_time_local;

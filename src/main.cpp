@@ -49,12 +49,12 @@ int main(int argc, char** argv)
 
     MK.homePosition();
 
-    while(ros::ok())
-    {
-        MK.manager();
-        ros::spinOnce();
-        r.sleep();
-    }
+//     while(ros::ok())
+//     {
+    MK.manager();
+//         ros::spinOnce();
+//         r.sleep();
+//     }
 
 
 

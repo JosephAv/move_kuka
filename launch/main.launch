@@ -1,5 +1,5 @@
 <launch>
-	
+  <arg name="csv" default="filepath"/>
 	<param name="trajectory_type" value="2"/> <!--4 sideside 5 updown 8 frontal--> 
 	<param name="traj_time" value="1"/> <!--0.05--> 
 	<param name="spin_rate" value="300"/><!--300-->
@@ -45,7 +45,9 @@
 	<param name="damping" value="0.7"/>
 	<param name="wrench" value="0.0"/>
 
- <node  name="main_node" pkg="move_kuka" type="main_mk" respawn="false" output="screen"/> 
+ <node  name="main_node" pkg="move_kuka" type="main_mk" respawn="false" output="screen"> 
+   <param name="csv_file" value="$(arg csv)"/>
+ </node>
 
     <group ns="right_hand">
 
