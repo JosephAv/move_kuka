@@ -1,60 +1,60 @@
 <launch>
-  <arg name="csv" default="filepath"/>
-	<param name="trajectory_type" value="2"/> <!--4 sideside 5 updown 8 frontal--> 
-	<param name="traj_time" value="1"/> <!--0.05--> 
-	<param name="spin_rate" value="300"/><!--300-->
-	<param name="box_size" value="0.3"/> <!-- 0.2 0.14-->
-	<param name="A_" value="0.1"/> <!--0.10-->
+  <arg name="csv_EE" default="filepath"/>
+  <arg name="csv_EL" default="filepath"/>
+  <param name="trajectory_type" value="2"/> <!--4 sideside 5 updown 8 frontal--> 
+  <param name="traj_time" value="1"/> <!--0.05--> 
+  <param name="spin_rate" value="300"/><!--300-->
+  <param name="box_size" value="0.3"/> <!-- 0.2 0.14-->
+  <param name="A_" value="0.1"/> <!--0.10-->
 
-	<!--Home joint values-->    
-	<param name="a1_home" value="0.56"/> 
-    <param name="a2_home" value="-1.33"/> 
-    <param name="e1_home" value="-0.19"/> 
-    <param name="a3_home" value="-1.36"/> 
-    <param name="a4_home" value="-0.65"/> 
-    <param name="a5_home" value="-1.09"/>
-    <param name="a6_home" value="0.12"/>
+  <!--Home joint values-->    
+  <param name="a1_home" value="0.56"/> 
+  <param name="a2_home" value="-1.33"/> 
+  <param name="e1_home" value="-0.19"/> 
+  <param name="a3_home" value="-1.36"/> 
+  <param name="a4_home" value="-0.65"/> 
+  <param name="a5_home" value="-1.09"/>
+  <param name="a6_home" value="0.12"/>
 
     <!--Rest Pose-->
-	<param name="rest_x_" value="1.54"/> <!-- -->
-	<param name="rest_y_" value="0.45"/> <!-- -->
-	<param name="rest_z_" value="1.3"/> <!-- -->
-	<param name="rest_q_w_" value="0.025"/> <!-- -->
-	<param name="rest_q_x_" value="0.64"/> <!-- -->
-	<param name="rest_q_y_" value="-0.11"/> <!--  -->
-	<param name="rest_q_z_" value="0.76"/> <!--  -->
+  <param name="rest_x_" value="1.54"/> <!-- -->
+  <param name="rest_y_" value="0.45"/> <!-- -->
+  <param name="rest_z_" value="1.3"/> <!-- -->
+  <param name="rest_q_w_" value="0.025"/> <!-- -->
+  <param name="rest_q_x_" value="0.64"/> <!-- -->
+  <param name="rest_q_y_" value="-0.11"/> <!--  -->
+  <param name="rest_q_z_" value="0.76"/> <!--  -->
 
     <!--Home Pose-->
-	<param name="offset_x_" value="1.675 "/> <!-- 1.675--> 
-	<param name="offset_y_" value="0.730"/> <!-- 0.730--> 
-	<param name="offset_z_" value="1.30"/> <!-- updown (5) offset z  1.30 cube, ball, bottle side 1.42 bottle up,berry 1.30, thumb 1.28 -->  
-	<param name="q_w_" value="0.0"/> <!-- 0.0-->
-	<param name="q_x_" value="0.711"/> <!-- 0.711-->
-	<param name="q_y_" value="0.0"/><!-- 0.0-->
-	<param name="q_z_" value="0.703"/> <!-- 0.703-->
+  <param name="offset_x_" value="1.675 "/> <!-- 1.675--> 
+  <param name="offset_y_" value="0.730"/> <!-- 0.730--> 
+  <param name="offset_z_" value="1.30"/> <!-- updown (5) offset z  1.30 cube, ball, bottle side 1.42 bottle up,berry 1.30, thumb 1.28 -->  
+  <param name="q_w_" value="0.0"/> <!-- 0.0-->
+  <param name="q_x_" value="0.711"/> <!-- 0.711-->
+  <param name="q_y_" value="0.0"/><!-- 0.0-->
+  <param name="q_z_" value="0.703"/> <!-- 0.703-->
 
+  <param name="ground_" type="bool" value="false" />  
+  <param name="off_high_" type="double" value="0.0" />  <!-- previous set 0.03 -->
+  <param name="bowl_" type="bool" value="false" />  
+  <param name="sliding_" type="bool" value="true" />  
 
-
-    <param name="ground_" type="bool" value="false" />  
-    <param name="off_high_" type="double" value="0.0" />  <!-- previous set 0.03 -->
-    <param name="bowl_" type="bool" value="false" />  
-    <param name="sliding_" type="bool" value="true" />  
-
-	<param name="stiffness_t" value="2000.0"/> <!--2000-->
-	<param name="stiffness_r" value="150.0"/><!--150-->
-	<param name="damping" value="0.7"/>
-	<param name="wrench" value="0.0"/>
+  <param name="stiffness_t" value="2000.0"/> <!--2000-->
+  <param name="stiffness_r" value="150.0"/><!--150-->
+  <param name="damping" value="0.7"/>
+  <param name="wrench" value="0.0"/>
 
  <node  name="main_node" pkg="move_kuka" type="main_mk" respawn="false" output="screen"> 
-   <param name="csv_file" value="$(arg csv)"/>
+   <param name="csv_file_EE" value="$(arg csv_EE)"/>
+   <param name="csv_file_EL" value="$(arg csv_EL)"/>
  </node>
 
-    <group ns="right_hand">
+  <group ns="right_hand">
 
-        <param name="from_topic" value="hand_position"/>
-        <param name="on_topic" value="joint_trajectory_controller/command"/>
-        <param name="synergy_joint" value="right_hand_synergy_joint"/>
-        <node name="hand_remap_node" pkg="move_kuka" type="hand_remap_mk" output="screen" />
+  <param name="from_topic" value="hand_position"/>
+  <param name="on_topic" value="joint_trajectory_controller/command"/>
+  <param name="synergy_joint" value="right_hand_synergy_joint"/>
+  <node name="hand_remap_node" pkg="move_kuka" type="hand_remap_mk" output="screen" />
 
     </group>
 

@@ -62,7 +62,7 @@ public:
 private:
   const double mm2m = 0.001;
   
-  const double averta = 120/57;
+  const double averta = 120/57*0.9;
   
   bool manager_done = false;
 // 	ros::NodeHandle n_;
@@ -80,7 +80,7 @@ private:
     Eigen::Affine3d pose_;
     lwr_controllers::Stiffness zero_stiffness_;
     geometry_msgs::Wrench zero_wrench_;
-    lwr_controllers::CartesianImpedancePoint msg_;
+    lwr_controllers::CartesianImpedancePoint msg_,msg_el;
 
     Eigen::Affine3d offset;
 	// void kukaTopGrasp();
@@ -103,7 +103,7 @@ private:
 
 	Eigen::Affine3d pose_home_affine;
 	
-	double num[15];
+	double num_EE[15], num_EL[15], num_ALL[31];
 	char delim;
 
 	// void tondoDatabase();
@@ -145,5 +145,5 @@ private:
 	Eigen::Vector4f ConjQ(Eigen::Vector4f Q_in);
 	*/
 	
-  std::string csv_filename;
+      std::string csv_filename_EE, csv_filename_EL;
 };
