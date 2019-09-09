@@ -129,53 +129,142 @@ move_kuka::move_kuka()
   ROS_INFO_STREAM("ELBOW trajectory file: " << csv_filename_EL);  
 
   if(!csv_filename_EE.empty() && !csv_filename_EL.empty()){
-    
-    //Load EE data
-    std::ifstream csv_file_EE;
+    //load data for EE and EL reference
+    std::ifstream csv_file_EE, csv_file_EL;
     csv_file_EE.open (csv_filename_EE);
- 
-    if(csv_file_EE.is_open())
-	    std::cout << "file EE correctly open" << std::endl;
-    else
-  
-    ROS_ERROR("Could not open input csv file");
-    
-    for (int i=0; i< 16; i++)
-    {
-      csv_file_EE >> num_EE[i];
-      csv_file_EE >> delim;
-      std::cout << num_EE[i] << " ";
-    }
-    std::cout << std::endl;
-   
-    csv_file_EE.close();
-    
-    //Load Elobw data
-    std::ifstream csv_file_EL;
     csv_file_EL.open (csv_filename_EL);
- 
-    if(csv_file_EL.is_open())
-	    std::cout << "file EL correctly open" << std::endl;
+    if(csv_file_EE.is_open())
+	    std::cout << "file end-effector correctly open" << std::endl;
     else
+      ROS_ERROR("Could not open input csv file");
+    if(csv_file_EL.is_open())
+	    std::cout << "file elbow correctly open" << std::endl;
+    else
+      ROS_ERROR("Could not open input csv file");
+    
+    unsigned int line = 0;
+    
+    Eigen::Matrix4d num_matrix_ee, num_matrix_el ;
+
+	
+    while(!csv_file_EE.eof() && !csv_file_EL.eof() && line < 1)
+    {
+      std::cout << line++ << ": ";
+      for (int i=0; i< 16; i++)
+      {
+	csv_file_EE >> num_EE[i];
+	csv_file_EE >> delim;
+	std::cout << num_EE[i] << " ";
+	
+	csv_file_EL >> num_EL[i];
+	csv_file_EL >> delim;
+	std::cout << num_EL[i] << " ";
+      }
+      std::cout << std::endl;  
+      
+      // pub msg
+    num_matrix_ee << num_EE[0], num_EE[4], num_EE[8], num_EE[12]*mm2m*averta,
+		     num_EE[1], num_EE[5], num_EE[9], num_EE[13]*mm2m*averta, 
+		     num_EE[2], num_EE[6], num_EE[10], num_EE[14]*mm2m*averta, 
+		     num_EE[3], num_EE[7], num_EE[11], num_EE[15];
+	      
+    num_matrix_el << num_EL[0], num_EL[4], num_EL[8], num_EL[12]*mm2m*averta_elbow,
+		     num_EL[1], num_EL[5], num_EL[9], num_EL[13]*mm2m*averta_elbow, 
+		     num_EL[2], num_EL[6], num_EL[10], num_EL[14]*mm2m*averta_elbow, 
+		     num_EL[3], num_EL[7], num_EL[11], num_EL[15];
+		     
+    }     
+// 		     ///////////////// MERDA
+//     Eigen::Matrix4d num_matrix_ee, num_matrix_el ;
+// 
+//     //Load EE data
+//     std::ifstream csv_file_EE;
+//     csv_file_EE.open (csv_filename_EE);
+//  
+//     if(csv_file_EE.is_open())
+// 	    std::cout << "file EE correctly open" << std::endl;
+//     else
+//       ROS_ERROR("Could not open input csv file");
+//     
+//     for (int i=0; i< 16; i++)
+//     {
+//       csv_file_EE >> num_EE[i];
+//       csv_file_EE >> delim;
+//       std::cout << num_EE[i] << " ";
+//     }
+//     std::cout << std::endl;
+//    
+//     csv_file_EE.close();
+//     
+//     num_matrix_ee << num_EE[0], num_EE[4], num_EE[8], num_EE[12]*mm2m*averta,
+// 		num_EE[1], num_EE[5], num_EE[9], num_EE[13]*mm2m*averta, 
+// 		num_EE[2], num_EE[6], num_EE[10], num_EE[14]*mm2m*averta, 
+// 		num_EE[3], num_EE[7], num_EE[11], num_EE[15];
+//     
+//     
+//     
+//     // fine qui ok
+//     
+//     //Load Elobw data
+//     std::ifstream csv_file_EL;
+//     csv_file_EL.open (csv_filename_EL);
+//     
+//     
+//     if(csv_file_EL.is_open())
+// 	    std::cout << "file EL correctly open" << std::endl;
+//     else
+//       ROS_ERROR("Could not open input csv file");
+//     
+//     for (int i=0; i< 16; i++)
+//     {
+//       csv_file_EL >> num_EL[i];
+//       csv_file_EL >> delim2;
+//       std::cout << num_EL[i] << " ";
+//     }
+//     std::cout << std::endl;
+//    
+//     csv_file_EL.close();
+//     
+//     num_matrix_el << num_EL[0], num_EL[4], num_EL[8], num_EL[12]*mm2m*averta,
+// 		num_EL[1], num_EL[5], num_EL[9], num_EL[13]*mm2m*averta, 
+// 		num_EL[2], num_EL[6], num_EL[10], num_EL[14]*mm2m*averta, 
+// 		num_EL[3], num_EL[7], num_EL[11], num_EL[15];
+// 		        
+//     //put all in the same vector
+//     for (int i=0; i< 16; i++)
+//     {
+//       num_ALL[i] = num_EE[i];
+//       num_ALL[i+16] = num_EL[i];
+//     }
+//     
+//     
+//       //set homing pose    
+// 
+// 		
+// 
+// 
+//     std::cout << ">>>>>> DEBUG INFO FOR TARGET POSES <<<<<<<" << std::endl;
+//     std::cout << " First pose for end effector \n" << num_matrix_ee << std::endl;
+//     std::cout << __LINE__ << "num_EE: ";
+//     for(int i=0;i<16;i++)
+//       std::cout << num_EE[i] << " ";
+//     std::cout << std::endl;
+//     std::cout << "Last element (should be 1): " << num_EE[15];
+//     //   assert(num_EE[15] == 1.0);
+//     std::cout << " First pose for elbow \n" << num_matrix_el << std::endl;
+//     std::cout << "num_EL: ";
+//     for(int i=0;i<16;i++)
+//       std::cout << num_EL[i] << " ";
+//     std::cout << std::endl;
+//     std::cout << "Last element (should be 1): " << num_EL[15];
+//     //   assert(num_EL[15] == 1.0);
+//     std::cout << "<<<<<< DEBUG INFO FOR TARGET POSES >>>>>>>" << std::endl;
+
+    pose_home_affine.matrix() = num_matrix_ee;
   
-    ROS_ERROR("Could not open input csv file");
-    
-    for (int i=0; i< 16; i++)
-    {
-      csv_file_EL >> num_EL[i];
-      csv_file_EL >> delim;
-      std::cout << num_EL[i] << " ";
-    }
-    std::cout << std::endl;
-   
-    csv_file_EL.close();
-    
-    //put all in the same vector
-    for (int i=0; i< 16; i++)
-    {
-      num_ALL[i] = num_EE[i];
-      num_ALL[i+16] = num_EL[i];
-    }
+    pose_home_affine_ELB.matrix() = num_matrix_el;
+  
+    elbow_task = true;
   }
   else if(!csv_filename_EE.empty()){
     std::ifstream csv_file_EE;
@@ -203,6 +292,22 @@ move_kuka::move_kuka()
       num_ALL[i] = num_EE[i];
       num_ALL[i+16] = 0.0;
     }    
+    
+    //set homing pose    
+    Eigen::Matrix4d num_matrix_ee, num_matrix_el ;
+    num_matrix_ee << num_EE[0], num_EE[4], num_EE[8], num_EE[12]*mm2m*averta,
+		    num_EE[1], num_EE[5], num_EE[9], num_EE[13]*mm2m*averta, 
+		    num_EE[2], num_EE[6], num_EE[10], num_EE[14]*mm2m*averta, 
+		    num_EE[3], num_EE[7], num_EE[11], num_EE[15];
+		
+    std::cout << ">>>>>> DEBUG INFO FOR TARGET POSES <<<<<<<" << std::endl;
+    std::cout << " First pose for end effector \n" << num_matrix_ee << std::endl;
+    std::cout << "Last element (should be 1): " << num_EE[15];
+    std::cout << "No elbow target pose" << std::endl;
+    std::cout << "<<<<<< DEBUG INFO FOR TARGET POSES >>>>>>>" << std::endl;
+    
+    
+    pose_home_affine.matrix() = num_matrix_ee;
   }
   
   
@@ -266,25 +371,10 @@ move_kuka::move_kuka()
   
   ee_offset = ee_offset1*ee_offset;
   
-  //set homing pose    
-  Eigen::Matrix4d num_matrix_ee, num_matrix_el ;
-  num_matrix_ee << num_EE[0], num_EE[4], num_EE[8], num_EE[12]*mm2m*averta,
-		   num_EE[1], num_EE[5], num_EE[9], num_EE[13]*mm2m*averta, 
-		   num_EE[2], num_EE[6], num_EE[10], num_EE[14]*mm2m*averta, 
-		   num_EE[3], num_EE[7], num_EE[11], num_EE[15];
-	      
-  num_matrix_el << num_EL[0], num_EL[4], num_EL[8], num_EL[12]*mm2m*averta,
-		   num_EL[1], num_EL[5], num_EL[9], num_EL[13]*mm2m*averta, 
-		   num_EL[2], num_EL[6], num_EL[10], num_EL[14]*mm2m*averta, 
-		   num_EL[3], num_EL[7], num_EL[11], num_EL[15];
-	      
-  pose_home_affine.matrix() = num_matrix_ee;
-
-  //pose_home_el_affine.matrix() = num_matrix_el;
   
   ROS_INFO_STREAM("Homing pose in ");
-  std::cout << "\tTranslation: " << std::endl <<  offset.translation() << std::endl;
-  std::cout << "\tRotation: " << std::endl <<  offset.rotation() << std::endl;
+  std::cout << "\tTranslation: " << std::endl <<  pose_home_affine.translation() << std::endl;
+  std::cout << "\tRotation: " << std::endl <<  pose_home_affine.rotation() << std::endl;
 
 }
 
@@ -299,9 +389,13 @@ void move_kuka::homePosition()
   // get current transofrmation between "vito_anchor" and "right_palm_link"
   std::string link_from = "/right_arm_base_link";
   std::string link_to   = "/right_arm_7_link"; 
-
+  std::string link_from_ELB = "/right_arm_base_link";
+  std::string link_to_ELB   = "/right_arm_3_link";  // TODO CHECK
+  
   tf::TransformListener listener;
+  tf::TransformListener listener_ELB;
   tf::StampedTransform t;
+  tf::StampedTransform t_ELB;
 
   ros::spinOnce();
 
@@ -323,6 +417,23 @@ void move_kuka::homePosition()
 	    ROS_ERROR("%s", ex.what());
 	    ros::Duration(1.0).sleep();
     }
+    
+    if(elbow_task)
+    {
+      try
+      {
+	      tf_ok=true;
+	      listener_ELB.waitForTransform(link_from_ELB, link_to_ELB, ros::Time(0), ros::Duration(20.0)); //ros::Duration(2.5)
+	      listener_ELB.lookupTransform(link_from_ELB, link_to_ELB,  ros::Time(0), t_ELB);
+      }
+      catch (tf::TransformException ex)
+      {
+	      tf_ok=false;
+	      ROS_ERROR("%s", ex.what());
+	      ros::Duration(1.0).sleep();
+      }
+    }
+    
     if(tf_ok)
     {
 	    break;
@@ -339,11 +450,13 @@ void move_kuka::homePosition()
   tf::quaternionTFToEigen(t.getRotation(), q_init);
   tf::vectorTFToEigen(t.getOrigin(), v_init);
 
+ 
   //Eigen::Affine3d pose_init, pose_rest;
   Eigen::Affine3d pose_init;
 
   pose_init = Eigen::Affine3d(q_init);
   pose_init.translation() = Eigen::Vector3d(v_init(0), v_init(1), v_init(2)); // translate x,y,z
+  
   //put a quaternion instead of rpy in pose_home
   /////////pose_home = Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX()); // rotate along "AXIS" axis by 90 degrees
   // pose_home = Eigen::AngleAxisd(-M_PI / 2., Eigen::Vector3d::UnitY()); // rotate along "AXIS" axis by 90 degrees
@@ -362,7 +475,22 @@ void move_kuka::homePosition()
 
   ROS_INFO("Begin homing...");
   
-  interpolation(pose_init, pose_home_affine, 10.0);// traj_time);
+  if(elbow_task) // ELBOW HOMING
+  {
+    Eigen::Quaterniond q_init_ELB;
+    Eigen::Vector3d v_init_ELB;
+    tf::quaternionTFToEigen(t_ELB.getRotation(), q_init_ELB);
+    tf::vectorTFToEigen(t_ELB.getOrigin(), v_init_ELB);
+    
+    Eigen::Affine3d pose_init_ELB;
+
+    pose_init_ELB = Eigen::Affine3d(q_init_ELB);
+    pose_init_ELB.translation() = Eigen::Vector3d(v_init_ELB(0), v_init_ELB(1), v_init_ELB(2)); // translate x,y,z
+  
+    interpolation(pose_init, pose_home_affine, pose_init_ELB, pose_home_affine_ELB, 10.0);
+  }
+  else // NO ELBOW INTERPOLATION
+    interpolation(pose_init, pose_home_affine, 10.0);// traj_time);
   
   ROS_INFO("Home is where the heart is");
 // 	pub_home_.publish(joint_home);
@@ -488,11 +616,11 @@ void move_kuka::manager()
 		     num_EE[2], num_EE[6], num_EE[10], num_EE[14]*mm2m*averta, 
 		     num_EE[3], num_EE[7], num_EE[11], num_EE[15];
 	      
-    num_matrix_el << num_EL[0], num_EL[4], num_EL[8], num_EL[12]*mm2m*averta*2,
-		     num_EL[1], num_EL[5], num_EL[9], num_EL[13]*mm2m*averta*2, 
-		     num_EL[2], num_EL[6], num_EL[10], num_EL[14]*mm2m*averta*2, 
+    num_matrix_el << num_EL[0], num_EL[4], num_EL[8], num_EL[12]*mm2m*averta_elbow,
+		     num_EL[1], num_EL[5], num_EL[9], num_EL[13]*mm2m*averta_elbow, 
+		     num_EL[2], num_EL[6], num_EL[10], num_EL[14]*mm2m*averta_elbow, 
 		     num_EL[3], num_EL[7], num_EL[11], num_EL[15];
-		
+		    
       Eigen::Affine3d pose_todo_ee,pose_todo_el;
       pose_todo_ee.matrix() = num_matrix_ee;
       pose_todo_ee = offset*pose_todo_ee*ee_offset;
@@ -712,7 +840,133 @@ int move_kuka::interpolation(Eigen::Affine3d x_start, Eigen::Affine3d x_finish, 
 	return 1;
 }
 
+int move_kuka::interpolation(Eigen::Affine3d x_start_EE, Eigen::Affine3d x_finish_EE, Eigen::Affine3d x_start_ELB, Eigen::Affine3d x_finish_ELB, double traj_time_local)
+{
+  
+  std::cout << "Interpolation will move EE from\n" << x_start_EE.translation() << " to \n " << x_finish_EE.translation() << std::endl;
+  std::cout << "Interpolation will rotate EE from\n" << x_start_EE.rotation() << " to \n " << x_finish_EE.rotation() << std::endl;
+  
+  std::cout << "Interpolation will move ELB from\n" << x_start_ELB.translation() << " to \n " << x_finish_ELB.translation() << std::endl;
+  std::cout << "Interpolation will rotate ELB from\n" << x_start_ELB.rotation() << " to \n " << x_finish_ELB.rotation() << std::endl;
+  
+  float th = 0.001;	//trade error
+  float alpha = 0.015;
+  float c = 0; //for slerp
 
+  Eigen::Affine3d x_next_EE, x_now_EE, x_prev_EE;
+  Eigen::Affine3d x_next_ELB, x_now_ELB, x_prev_ELB;
+
+  x_now_EE  = x_start_EE;
+  x_prev_EE = x_start_EE;
+  x_now_ELB  = x_start_ELB;
+  x_prev_ELB = x_start_ELB;
+  
+  geometry_msgs::Pose x_finish_frame_EE, x_now_frame_EE;
+  geometry_msgs::Pose x_finish_frame_ELB, x_now_frame_ELB;
+
+  // read quaternion from GeometryPoseMsg and convert them to Eigen::Quaterniond
+  //passing from affine3d to geometry_msg
+  
+  x_finish_EE = offset*x_finish_EE*ee_offset;
+  x_finish_ELB = offset*x_finish_ELB*ee_offset;
+  
+  std::cout << "Target EE pose\n" << x_finish_EE.translation() << std::endl;
+  std::cout << "Target ELB pose\n" << x_finish_ELB.translation() << std::endl;
+  
+  tf::poseEigenToMsg(x_now_EE, x_now_frame_EE);
+  tf::poseEigenToMsg(x_finish_EE, x_finish_frame_EE);
+  tf::poseEigenToMsg(x_now_ELB, x_now_frame_ELB);
+  tf::poseEigenToMsg(x_finish_ELB, x_finish_frame_ELB);
+
+  Eigen::Quaterniond q_start_EE(x_now_frame_EE.orientation.w, x_now_frame_EE.orientation.x, x_now_frame_EE.orientation.y, x_now_frame_EE.orientation.z);
+  Eigen::Quaterniond q_finish_EE(x_finish_frame_EE.orientation.w, x_finish_frame_EE.orientation.x, x_finish_frame_EE.orientation.y, x_finish_frame_EE.orientation.z);
+  Eigen::Quaterniond q_err_EE;
+
+  Eigen::Quaterniond q_start_ELB(x_now_frame_ELB.orientation.w, x_now_frame_ELB.orientation.x, x_now_frame_ELB.orientation.y, x_now_frame_ELB.orientation.z);
+  Eigen::Quaterniond q_finish_ELB(x_finish_frame_ELB.orientation.w, x_finish_frame_ELB.orientation.x, x_finish_frame_ELB.orientation.y, x_finish_frame_ELB.orientation.z);
+  Eigen::Quaterniond q_err_ELB;
+  
+  ros::Rate r(spin_rate);
+  
+  while (c <= 1 && ros::ok())
+  {
+    std::cout << "\r" << c << std::flush;
+    // update orientation
+    double ctanh(std::tanh(4*c));
+    if (c <= 1)
+    {
+	    q_err_EE = q_start_EE.slerp(ctanh, q_finish_EE);
+	    q_err_ELB = q_start_ELB.slerp(ctanh, q_finish_ELB);
+    }
+
+    std::cout << " q_err_EE: " << q_err_EE.w() << q_err_EE.x() << q_err_EE.y() << q_err_EE.z() << std::endl;
+
+    x_next_EE = Eigen::AngleAxisd(q_err_EE);
+    x_next_ELB = Eigen::AngleAxisd(q_err_ELB);
+
+    std::cout << " x_next_EE: " << x_next_EE.translation() << std::endl;
+
+//     // visual tool
+//     visual_tools_->publishAxis(x_next_EE, 0.1, 0.01, "axis");
+//     visual_tools_->trigger();
+    
+    x_next_EE.translation() = x_now_EE.translation() + ctanh * (x_finish_EE.translation() - x_now_EE.translation() ) ;
+    x_next_ELB.translation() = x_now_ELB.translation() + ctanh * (x_finish_ELB.translation() - x_now_ELB.translation() ) ;
+    
+    // set control
+    tf::poseEigenToMsg(x_next_EE, msg_.x_FRI);
+    tf::poseEigenToMsg(x_next_ELB, msg_el.x_FRI);
+    
+//     std::cout << " msg_.x_FRI " << msg_.x_FRI.position.x << ", " << msg_.x_FRI.position.y << ", " << msg_.x_FRI.position.z << std::flush;
+//     std::cout << " msg_el.x_FRI " << msg_el.x_FRI << std::flush;
+    
+
+    
+    geometry_msgs::Pose pose_EE, pose_ELB;
+    pose_EE = msg_.x_FRI;
+    pose_ELB = msg_el.x_FRI;
+    
+    // publish to vito_bridge_controller
+    std_msgs::Float64MultiArray pose_cartesian_interp_;
+    pose_cartesian_interp_.data.resize(12);
+    pose_cartesian_interp_.data[0] = pose_EE.position.x;
+    pose_cartesian_interp_.data[1] = pose_EE.position.y;
+    pose_cartesian_interp_.data[2] = pose_EE.position.z;
+
+    double roll,pitch,yaw;	
+    tf::Quaternion q_EE(pose_EE.orientation.x,pose_EE.orientation.y,pose_EE.orientation.z,pose_EE.orientation.w);
+    tf::Matrix3x3 mtx_EE(q_EE);
+    mtx_EE.getRPY(roll,pitch,yaw);
+    pose_cartesian_interp_.data[3] = roll;
+    pose_cartesian_interp_.data[4] = pitch;
+    pose_cartesian_interp_.data[5] = yaw;
+    
+    pose_cartesian_interp_.data[6] = pose_ELB.position.x;
+    pose_cartesian_interp_.data[7] = pose_ELB.position.y;
+    pose_cartesian_interp_.data[8] = pose_ELB.position.z;
+    
+    
+    tf::Quaternion q_ELB(pose_ELB.orientation.x,pose_ELB.orientation.y,pose_ELB.orientation.z,pose_ELB.orientation.w);
+    tf::Matrix3x3 mtx_ELB(q_ELB);
+    mtx_ELB.getRPY(roll,pitch,yaw);
+    pose_cartesian_interp_.data[9] = roll;
+    pose_cartesian_interp_.data[10] = pitch;
+    pose_cartesian_interp_.data[11] = yaw;
+
+    pub_command_ci.publish(pose_cartesian_interp_);
+    
+    ros::spinOnce();
+
+    c += (1.0 / spin_rate) / traj_time_local;
+
+    r.sleep();
+  }
+  std::cout << std::endl;
+  // update global pose_ for next steps
+  pose_ = x_next_EE;
+  
+  return 1;
+}
 
 //------------------------------------------------------------------------------------------
 //                                                                            finishPosition

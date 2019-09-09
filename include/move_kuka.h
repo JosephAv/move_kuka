@@ -60,9 +60,13 @@ public:
 	void homePosition();
 
 private:
+  
+  bool elbow_task = false; // set to true when requiring null space projection of elbow in the end effector task null space
+  
   const double mm2m = 0.001;
   
-  const double averta = 120/57*0.9;
+  const double averta 		= 120/57*0.9;
+  const double averta_elbow 	= 120/57*0.9*2; // SIMULATED 1.5
   
   bool manager_done = false;
 // 	ros::NodeHandle n_;
@@ -102,14 +106,23 @@ private:
 	std_msgs::Float64MultiArray pose_home1;
 
 	Eigen::Affine3d pose_home_affine;
+	Eigen::Affine3d pose_home_affine_ELB;
 	
 	double num_EE[15], num_EL[15], num_ALL[31];
-	char delim;
+	char delim,delim2;
 
 	// void tondoDatabase();
 	// void openTondoDatabase(float& x,float& y,float& z,float& angle);
 
 	int interpolation(Eigen::Affine3d x_start, Eigen::Affine3d x_finish, double traj_time_local=2.0);
+	/**
+	 * @param x_start_EE end effector initial pose
+	 * @param x_finish_EE end effector target pose
+	 * @param x_start_EL elbow initial pose
+	 * @param x_finish_EL elbow target pose
+	 */
+	int interpolation(Eigen::Affine3d x_start_EE, Eigen::Affine3d x_finish_EE, Eigen::Affine3d x_start_ELB, Eigen::Affine3d x_finish_ELB, double traj_time_local=2.0);
+	
 	void finishPosition(float z);
 
 
