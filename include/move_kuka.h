@@ -61,11 +61,18 @@ public:
 
 private:
   
+  /**
+   * next two functions from pg_movement sources. All rights reserved to Tondo Alessandro.
+   */
+  void mkTondoDatabase();
+  void mkOpenTondoDatabase(float& x,float& y,float& z,float& angle);
+
+  bool touched_object = false;
   bool elbow_task = false; // set to true when requiring null space projection of elbow in the end effector task null space
   
   const double mm2m = 0.001;
   
-  const double averta 		= 120/57*0.9;
+  const double averta 		= 120/57*1.1; // *1 sui task no drinking, per il task drinking *1.1
   const double averta_elbow 	= 120/57*0.9*2; // SIMULATED 1.5
   
   bool manager_done = false;

@@ -475,6 +475,10 @@ void move_kuka::homePosition()
 
   ROS_INFO("Begin homing...");
   
+  ROS_INFO("Open hand.");
+  handClosure(0.0);
+
+  
   if(elbow_task) // ELBOW HOMING
   {
     Eigen::Quaterniond q_init_ELB;
@@ -561,6 +565,15 @@ void move_kuka::homePosition()
 
 // 	getchar();
 
+  std::cout << "\r\n\n\n\033[32m\033[1mPress to close the hand... \033[0m" << std::endl;
+  getchar();
+  sleep(3);
+  handClosure(0.8);
+  sleep(3);
+  
+  std::cout << "\r\n\n\n\033[32m\033[1mRest Position \033[0m" << std::endl;
+  std::cout << "\r\n\n\n\033[32m\033[1mPress to continue.. \033[0m" << std::endl;
+  getchar();
 }
 
 
@@ -575,7 +588,9 @@ void move_kuka::manager()
     return;
   }
       
-  ros::Rate r(25);
+//   ros::Rate r(25); // normale
+  ros::Rate r(10); // drinking task
+
   
   // Elbow and End Effector
   if(!csv_filename_EE.empty() && !csv_filename_EL.empty())
@@ -596,6 +611,12 @@ void move_kuka::manager()
     unsigned int line = 0;
     while(!csv_file_EE.eof() && !csv_file_EL.eof())
     {
+//       if (touched_object)
+//       {
+// 	ROS_INFO("Detected contact. Stopping trajectory and starting reactive grasping.");
+// 	break;
+//       }
+      
       std::cout << line++ << ": ";
       for (int i=0; i< 16; i++)
       {
@@ -624,6 +645,8 @@ void move_kuka::manager()
       Eigen::Affine3d pose_todo_ee,pose_todo_el;
       pose_todo_ee.matrix() = num_matrix_ee;
       pose_todo_ee = offset*pose_todo_ee*ee_offset;
+
+      pose_ = pose_todo_ee;
       
       pose_todo_el.matrix() = num_matrix_el;
       pose_todo_el = offset*pose_todo_el*ee_offset;
@@ -636,6 +659,7 @@ void move_kuka::manager()
       pose = msg_.x_FRI;
       pose_el = msg_el.x_FRI;
       
+
       // publish to vito_bridge_controller
       std_msgs::Float64MultiArray pose_cartesian_interp_;
       pose_cartesian_interp_.data.resize(12);
@@ -683,6 +707,11 @@ void move_kuka::manager()
     unsigned int line = 0;
     while(!csv_file_EE.eof())
     {
+//       if (touched_object)
+//       {
+// 	ROS_INFO("Detected contact. Stopping trajectory and starting reactive grasping.");
+// 	break;
+//       }
       std::cout << line++ << ": ";
       for (int i=0; i< 16; i++)
       {
@@ -703,6 +732,8 @@ void move_kuka::manager()
       pose_todo.matrix() = num_matrix_ee;
     //   pose_todo = offset*pose_todo;
       pose_todo = offset*pose_todo*ee_offset;
+      
+      pose_ = pose_todo;
       
       tf::poseEigenToMsg(pose_todo, msg_.x_FRI);
       geometry_msgs::Pose pose;
@@ -731,10 +762,29 @@ void move_kuka::manager()
     csv_file_EE.close();
   }
 
+  touched_object = true; // HACK truffone
   
-  
-  
-  
+  if (touched_object)
+  {
+    ROS_INFO("Managing contact.");
+    flag_grasp_ = true;
+//     mkTondoDatabase();
+    sleep(2);
+
+    handClosure(1.0);
+    // handClosure(1.0);
+    visual_tools_->deleteAllMarkers();
+    sleep(3);
+//     finishPosition(0.05);
+    sleep(3);
+    flag_grasp_ =  false;
+    std::cout << "\r\n\n\n\033[32m\033[1mPress to open the hand... \033[0m" << std::endl;
+    getchar();
+    sleep(3);
+    handClosure(0.0);
+    sleep(3);
+  }
+
   
   
   
@@ -979,7 +1029,7 @@ void move_kuka::finishPosition(float z)
 	pose_finish = pose_;
 	pose_finish.translation() = pose_finish.translation() + Eigen::Vector3d(0, 0, z); // translate x,y,z
 
-	interpolation(pose_, pose_finish, traj_time);
+	interpolation(pose_, pose_finish, 10.0);
 
 	std::cout << "\r\n\n\n\033[32m\033[1mGrasped Object\033[0m" << std::endl;
 	
@@ -999,5 +1049,190 @@ void move_kuka::handClosure(float v)
 
 
 
+//------------------------------------------------------------------------------------------
+//                                                                             tondoDatabase
+//------------------------------------------------------------------------------------------
+void move_kuka::mkTondoDatabase()
+{
+	Eigen::Affine3d pose_grasp;
 
+	float x, y, z, angle;
 
+	mkOpenTondoDatabase(x, y, z, angle);
+
+	if (bowl_ == true)
+	{
+		pose_grasp = Eigen::AngleAxisd(angle * M_PI / 180, Eigen::Vector3d::UnitY()); // rotate along "AXIS" axis by 90 degrees
+
+		pose_grasp.translation() = Eigen::Vector3d( z, -y, x); // translate x,y,z // all poses are local
+		// pose_grasp.translation() = Eigen::Vector3d( z, y, -x); // translate x,y,z // all poses are local
+		// pose_grasp.translation() = Eigen::Vector3d( x, y, z); // translate x,y,z // all poses are local
+		ROS_INFO_STREAM("Executing Bowl Primitive");
+		interpolation(pose_, pose_*pose_grasp, traj_time/2);
+	}
+	else {
+		if (sliding_ == true)
+		{
+			ROS_INFO_STREAM("Executing Sliding Primitive");
+			pose_grasp = Eigen::AngleAxisd(0 * M_PI / 180, Eigen::Vector3d::UnitY()); // rotate along "AXIS" axis by 90 degrees
+
+			double press = 0.04;
+			pose_grasp.translation() = Eigen::Vector3d( -press, 0, 0); // translate x,y,z // all poses are local
+			interpolation(pose_, pose_*pose_grasp, traj_time/2);
+
+			double transl = 0.25;
+			pose_grasp.translation() = Eigen::Vector3d( 0, 0, -transl); // translate x,y,z // all poses are local
+			interpolation(pose_, pose_*pose_grasp, traj_time/2);
+
+			pose_grasp.translation() = Eigen::Vector3d( press, 0, 0); // translate x,y,z // all poses are local
+			interpolation(pose_, pose_*pose_grasp, traj_time/2);
+
+			pose_grasp = Eigen::AngleAxisd(angle * M_PI / 180, Eigen::Vector3d::UnitY()); // rotate along "AXIS" axis by 90 degrees
+			pose_grasp.translation() = Eigen::Vector3d( z, -y, x); // translate x,y,z // all poses are local
+			interpolation(pose_, pose_*pose_grasp, traj_time/2);
+		}
+		else {
+			pose_grasp = Eigen::AngleAxisd(angle * M_PI / 180, Eigen::Vector3d::UnitZ()); // rotate along "AXIS" axis by 90 degrees
+
+			pose_grasp.translation() = Eigen::Vector3d( z, -y, x); // translate x,y,z // all poses are local
+			// pose_grasp.translation() = Eigen::Vector3d( z, y, -x); // translate x,y,z // all poses are local
+			// pose_grasp.translation() = Eigen::Vector3d( x, y, z); // translate x,y,z // all poses are local
+			ROS_INFO_STREAM("Executing Tondo Primitive");
+			interpolation(pose_, pose_*pose_grasp, traj_time/2);
+		}
+	}
+	
+}
+
+//------------------------------------------------------------------------------------------
+//                                                                         openTondoDatabase
+//------------------------------------------------------------------------------------------
+void move_kuka::mkOpenTondoDatabase(float& x, float& y, float& z, float& angle)
+{
+	if (ground_ == true)
+		{
+			x = 0;
+			y = 0;
+			z = 0+off_high_;
+			angle = 0;
+
+		}
+		else if (bowl_ == true)
+		{
+			x = 0.1;
+			y = 0;
+			z = -0.17;
+			angle = 60;
+
+		}
+		else if (sliding_ == true)
+		{
+			x = 0.05;
+			y = 0;
+			z = -0.1;
+			angle = 25;
+
+		}
+		else{
+			if (finger_name_ == "frontal_thumb")
+			{
+				x = 0.005;
+				y = 0.045;
+				z = 0.00; //-0.020
+				angle = 35;
+			}
+			else if (finger_name_ == "frontal_index")
+			{
+				x = 0.08; // 0.13
+				y = 0.015;
+				z = 0.02;
+				angle = 15; //-15
+ 			}
+			else if (finger_name_ == "frontal_middle")
+			{
+				x = 0.085; // 0.135
+				y = -0.015;
+				z = 0.025;
+				angle = 12;
+			}
+			else if (finger_name_ == "frontal_ring")
+			{
+				x = 0.07; // 0.12
+				y = -0.045;
+				z = 0.015;
+				angle = 5;
+			}
+			else if (finger_name_ == "frontal_little")
+			{
+				x = 0.06; // 0.11
+				y = -0.07;
+				z = 0.03;
+				angle = -11;
+			}
+			else if (finger_name_ == "side_index")
+			{
+				x = 0.045; //0.070 0.060
+ 				y = 0.038; //0.04
+				z = 0.015; //0.020
+				angle = 45;
+			}
+			else if (finger_name_ == "side_little")
+			{
+				x = 0.045; // 0.075
+				y = -0.03;
+				z = 0.05;
+				angle = -35;
+			}
+			else if (finger_name_ == "side_thumb")
+			{
+				x = -0.005;
+				y = 0.04;
+				z = -0.03;
+				angle = 40;
+			}
+			else if (finger_name_ == "vertical_thumb")
+			{
+				x = -0.005;
+				y = 0.045;
+				z = -0.04;
+				angle = 45;
+			}
+			else if (finger_name_ == "vertical_index")
+			{
+				x = 0.060; // 0.060
+				y = 0.015;
+				z = 0.02;  //-0.02
+				angle = 20;
+			}
+			else if (finger_name_ == "vertical_ring")
+			{
+				x = 0.045; // 0.075
+				y = -0.025;
+				z = 0.015;   // -0.005
+				angle = -6; // 6
+			}
+			else if (finger_name_ == "vertical_little")
+			{
+				x = 0.075; //  0.040 0.075
+				y = -0.04;
+				z = 0.0; // 0.01 -0.01
+				angle = -16;
+			}
+			else if (finger_name_ == "vertical_middle")
+			{
+				x = 0.065; // 0.045 0.085
+				y = -0.005;
+				z = 0.015; //0.015 -0.04
+				angle = 13;
+			}
+			else
+			{
+				x = 0;
+				y = 0;
+				z = 0;
+				angle = 0;
+				ROS_ERROR("Error in Alessandro Tondo Database");
+			}
+			}
+			z = z +off_high_;
+}
